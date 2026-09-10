@@ -61,7 +61,43 @@ Defaults:
 
 The local deterministic index produces the first ranking. Ollama is then used only on the best candidates, so a search over 30,000 files does **not** send 30,000 files through the model.
 
-Only extracted text is sent to Ollama.
+## v2.3 structured LLM search instructions
+
+The natural-language prompt is now interpreted once as **search instructions** before candidate files are LLM-ranked. The model separates the request into:
+
+- filename hints
+- folder/path hints
+- file-type hints
+- content hints
+- exclusions
+- hard/must conditions
+- soft preferences
+
+Each candidate file is then evaluated against separate evidence sections rather than treating everything as document text.
+
+### Metadata sent separately to the LLM
+
+- file name
+- file name without extension
+- extension
+- friendly file type such as `excel spreadsheet workbook`
+- parent folder
+- full folder path
+- full file path
+- size
+- modified date
+
+The extracted file content is supplied as its own independent section.
+
+For example:
+
+`find an Excel quotation in the Finance folder mentioning transformers, but exclude PDFs`
+
+is interpreted as instructions across metadata and content. `Excel` applies to file type, `Finance` applies to the folder/path, `quotation` may be supported by filename or content, `transformers` applies to content/context, and the PDF exclusion is treated as a file-type rule rather than requiring those literal words to appear in a document.
+
+When the GUI file-type selector is **All supported files**, LLM file-type hints can also narrow the candidate set automatically.
+
+The preserved v2.2.0 package remains in the repo and `v2_3_search_logic.py` is applied by the launcher, making the new search behaviour isolated and easy to review or roll back.
 
 ## Install
 
@@ -123,7 +159,7 @@ The full index is retained, so changing the file type filter does not require re
 
 ## v2.2 file-type indexing behaviour
 
-The **File type (index + search)** selector now applies to both operations:
+The **File type (index + search)** selector applies to both operations:
 
 - **Build / Update Index** only enumerates and opens files in the selected category.
 - **Search Indexed Files** only searches that selected category.
