@@ -1,33 +1,39 @@
 #!/usr/bin/env python3
-"""
-Bootstrap launcher for Generic Local File Search v2.2.0.
+"""Launcher for Generic Local File Search v2.3.0.
 
-The exact v2.2.0 source package is stored in
-`generic_local_file_search_v2.2.0.zip`. This launcher executes the packaged
-`generic_file_search_gui.py` directly from that archive so the repository can
-be cloned and run immediately while preserving the original package bytes.
+Loads the preserved v2.2.0 application from the release ZIP, installs the v2.3
+structured LLM search layer, then starts the Tkinter GUI.
 """
 from pathlib import Path
+from types import ModuleType
 from zipfile import ZipFile
+import sys
+
+from v2_3_search_logic import install
 
 PACKAGE = Path(__file__).with_name("generic_local_file_search_v2.2.0.zip")
 MEMBER = "generic_file_search_gui.py"
 
 
-def main() -> None:
+def load_core() -> ModuleType:
     if not PACKAGE.exists():
-        raise SystemExit(f"Missing package: {PACKAGE}")
-
+        raise SystemExit(f"Missing preserved core package: {PACKAGE}")
     with ZipFile(PACKAGE, "r") as archive:
         source = archive.read(MEMBER)
 
-    namespace = {
-        "__name__": "__main__",
-        "__file__": str(Path(__file__).resolve()),
-        "__package__": None,
-    }
-    exec(compile(source, MEMBER, "exec"), namespace, namespace)
+    module = ModuleType("generic_file_search_core")
+    module.__file__ = str(PACKAGE) + "/" + MEMBER
+    module.__package__ = None
+    sys.modules[module.__name__] = module
+    exec(compile(source, module.__file__, "exec"), module.__dict__, module.__dict__)
+    return module
+
+
+def main() -> int:
+    core = load_core()
+    install(core)
+    return core.main()
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
