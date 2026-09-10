@@ -1,0 +1,34 @@
+name: Unpack v2.2.0 package
+
+on:
+  push:
+    paths:
+      - 'generic_local_file_search_v2.2.0.zip'
+      - '.github/workflows/unpack-v2.2.0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Extract package
+        run: |
+          unzip -o generic_local_file_search_v2.2.0.zip -d .
+
+      - name: Commit extracted source files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add generic_file_search_gui.py generic_file_search_requirements.txt GENERIC_FILE_SEARCH_README.md
+          if git diff --cached --quiet; then
+            echo "No extracted-file changes to commit."
+          else
+            git commit -m "Publish extracted Generic Local File Search v2.2.0 source"
+            git push
+          fi
